@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -98,29 +99,15 @@ func (this *Clash) LoadTemplate(path string, protos []interface{}) []byte {
 	var proxys []map[string]interface{}
 	var proxies []string
 
-	switch protos[0].(type) {
-	case ClashRSSR:
-		for _, proto := range protos {
-			c := proto.(ClashRSSR)
-			proxy := make(map[string]interface{})
-			j, _ := json.Marshal(proto)
-			json.Unmarshal(j, &proxy)
-			proxys = append(proxys, proxy)
-			this.Proxy = append(this.Proxy, proxy)
-			proxies = append(proxies, c.Name)
-		}
-		break
-	case ClashVmess:
-		for _, proto := range protos {
-			c := proto.(ClashVmess)
-			proxy := make(map[string]interface{})
-			j, _ := json.Marshal(proto)
-			json.Unmarshal(j, &proxy)
-			proxys = append(proxys, proxy)
-			this.Proxy = append(this.Proxy, proxy)
-			proxies = append(proxies, c.Name)
-		}
-		break
+	for _, proto := range protos {
+		o := reflect.ValueOf(proto)
+		nameField := o.FieldByName("Name")
+		proxy := make(map[string]interface{})
+		j, _ := json.Marshal(proto)
+		json.Unmarshal(j, &proxy)
+		proxys = append(proxys, proxy)
+		this.Proxy = append(this.Proxy, proxy)
+		proxies = append(proxies, nameField.String())
 	}
 
 	this.Proxy = proxys

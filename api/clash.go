@@ -186,8 +186,7 @@ func V2ray2Clash(c *gin.Context) {
 			continue
 		}
 		s := scanner.Text()[8:]
-		s = strings.Trim(s, `\n`)
-		s = strings.Trim(s, `\r`)
+		s = strings.TrimSpace(s)
 		vmconfig, err := Base64DecodeStripped(s)
 		if err != nil {
 			continue
@@ -277,8 +276,7 @@ func SSR2ClashR(c *gin.Context) {
 			continue
 		}
 		s := scanner.Text()[6:]
-		s = strings.Trim(s, `\n`)
-		s = strings.Trim(s, `\r`)
+		s = strings.TrimSpace(s)
 		rawSSRConfig, err := Base64DecodeStripped(s)
 		if err != nil {
 			continue

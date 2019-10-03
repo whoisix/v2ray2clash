@@ -2,6 +2,7 @@ package api
 
 import (
 	"bufio"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -32,18 +34,18 @@ type Vmess struct {
 }
 
 type ClashVmess struct {
-	Name           string      `json:"name,omitempty"`
-	Type           string      `json:"type,omitempty"`
-	Server         string      `json:"server,omitempty"`
-	Port           interface{} `json:"port,omitempty"`
-	UUID           string      `json:"uuid,omitempty"`
-	AlterID        int         `json:"alterId,omitempty"`
-	Cipher         string      `json:"cipher,omitempty"`
-	TLS            bool        `json:"tls,omitempty"`
-	Network        string      `json:"network,omitempty"`
-	WSPATH         string      `json:"ws-path,omitempty"`
-	WSHeaders      interface{} `json:"-"`
-	SkipCertVerify bool        `json:"-"`
+	Name           string            `json:"name,omitempty"`
+	Type           string            `json:"type,omitempty"`
+	Server         string            `json:"server,omitempty"`
+	Port           interface{}       `json:"port,omitempty"`
+	UUID           string            `json:"uuid,omitempty"`
+	AlterID        int               `json:"alterId,omitempty"`
+	Cipher         string            `json:"cipher,omitempty"`
+	TLS            bool              `json:"tls,omitempty"`
+	Network        string            `json:"network,omitempty"`
+	WSPATH         string            `json:"ws-path,omitempty"`
+	WSHeaders      map[string]string `proxy:"ws-headers,omitempty"`
+	SkipCertVerify bool              `proxy:"skip-cert-verify,omitempty"`
 }
 
 type ClashRSSR struct {
@@ -154,6 +156,36 @@ func Base64DecodeStripped(s string) ([]byte, error) {
 	return decoded, err
 }
 
+type Result struct {
+	r   *http.Response
+	err error
+}
+
+func httpGet(url string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	c := make(chan Result)
+	go func() {
+		resp, err := http.DefaultClient.Do(req)
+		c <- Result{r: resp, err: err}
+	}()
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case res := <-c:
+		defer res.r.Body.Close()
+		if res.err != nil || res.r.StatusCode != http.StatusOK {
+			return nil, err
+		}
+		s, err := ioutil.ReadAll(res.r.Body)
+		return s, err
+	}
+}
+
 func V2ray2Clash(c *gin.Context) {
 	rawURI := c.Request.URL.RawQuery
 	if !strings.HasPrefix(rawURI, "sub_link=http") {
@@ -161,15 +193,9 @@ func V2ray2Clash(c *gin.Context) {
 		return
 	}
 	sublink := rawURI[9:]
-	resp, err := http.Get(sublink)
+	s, err := httpGet(sublink)
 
 	if nil != err {
-		c.String(http.StatusBadRequest, "sublink 不能访问")
-		return
-	}
-	defer resp.Body.Close()
-	s, err := ioutil.ReadAll(resp.Body)
-	if nil != err || resp.StatusCode != http.StatusOK {
 		c.String(http.StatusBadRequest, "sublink 不能访问")
 		return
 	}
@@ -251,15 +277,8 @@ func SSR2ClashR(c *gin.Context) {
 		return
 	}
 	sublink := rawURI[9:]
-	resp, err := http.Get(sublink)
-
+	s, err := httpGet(sublink)
 	if nil != err {
-		c.String(http.StatusBadRequest, "sublink 不能访问")
-		return
-	}
-	defer resp.Body.Close()
-	s, err := ioutil.ReadAll(resp.Body)
-	if nil != err || resp.StatusCode != http.StatusOK {
 		c.String(http.StatusBadRequest, "sublink 不能访问")
 		return
 	}

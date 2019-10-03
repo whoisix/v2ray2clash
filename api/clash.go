@@ -44,8 +44,8 @@ type ClashVmess struct {
 	TLS            bool              `json:"tls,omitempty"`
 	Network        string            `json:"network,omitempty"`
 	WSPATH         string            `json:"ws-path,omitempty"`
-	WSHeaders      map[string]string `proxy:"ws-headers,omitempty"`
-	SkipCertVerify bool              `proxy:"skip-cert-verify,omitempty"`
+	WSHeaders      map[string]string `json:"ws-headers,omitempty"`
+	SkipCertVerify bool              `json:"skip-cert-verify,omitempty"`
 }
 
 type ClashRSSR struct {

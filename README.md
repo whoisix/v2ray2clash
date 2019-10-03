@@ -7,7 +7,15 @@
 * Linux 64: clashconfig-linux-amd64
 * 树莓派:    clashconfig-linux-armv7
 # 使用方法:
-1. 下载解压对应系统的主程序运行，主程序默认会监听 0.0.0.0:5050
+1. 下载解压对应系统的主程序运行，主程序默认会监听 0.0.0.0:5050，也可以使用以下参数改变默认监听的地址和端口。
+```
+Usage of ./clashconfig-linux-armv7:
+  -h    this help
+  -l string
+        Listen address (default "0.0.0.0")
+  -p string
+        Listen Port (default "5050")
+```
 2. 使用下面格式设置clash订阅链接, 也可以直接用浏览器访问，下载配置文件手动设置
 #### v2ary转clash
 ```

@@ -3,6 +3,8 @@ package main
 import (
 	"clashconfig/api"
 	"context"
+	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -29,7 +31,18 @@ func DownLoadTemplate(url string, path string) {
 	log.Printf("Rules template download complete. [%s]\n", path)
 }
 func main() {
+	var listenAddr string
+	var listenPort string
+	var h bool
+	flag.BoolVar(&h, "h", false, "this help")
+	flag.StringVar(&listenAddr, "l", "0.0.0.0", "Listen address")
+	flag.StringVar(&listenPort, "p", "5050", "Listen Port")
+	flag.Parse()
 
+	if h {
+		flag.Usage()
+		return
+	}
 	_, err := os.Stat("ConnersHua.yaml")
 	if err != nil && os.IsNotExist(err) {
 		DownLoadTemplate("https://raw.githubusercontent.com/ConnersHua/Profiles/master/Clash/Pro.yaml", "ConnersHua.yaml")
@@ -43,7 +56,7 @@ func main() {
 	router.GET("/ssr2clashr", api.SSR2ClashR)
 
 	srv := &http.Server{
-		Addr:    "0.0.0.0:5050",
+		Addr:    fmt.Sprintf("%s:%s", listenAddr, listenPort),
 		Handler: router,
 	}
 

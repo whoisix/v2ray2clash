@@ -1,6 +1,6 @@
 # 功能
-* v2ray 订阅转 clash 订阅
-* ssr 订阅转 [clashr](https://t.me/clashr4ssr) 订阅
+* v2ray 订阅转 [clash](https://github.com/Dreamacro/clash)、[clashx](https://github.com/yichengchen/clashX)、[cfw](https://github.com/Fndroid/clash_for_windows_pkg/releases) 订阅
+* ssr 订阅转 clashr 订阅
 # 主程序:
 * macOS:    clashconfig-darwin-amd64
 * windows:  clashconfig-windows-amd64

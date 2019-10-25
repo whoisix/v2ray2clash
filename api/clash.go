@@ -116,23 +116,16 @@ func (this *Clash) LoadTemplate(path string, protos []interface{}) []byte {
 
 	for _, group := range this.ProxyGroup {
 		groupProxies := group["proxies"].([]interface{})
-		switch group["name"].(string) {
-		case "ForeignMedia": // 国际媒体服务
-			group["proxies"] = []string{"PROXY"}
-		case "DomesticMedia": // 国内媒体服务
-			group["proxies"] = []string{"DIRECT", "PROXY"}
-		default:
-			for i, proxie := range groupProxies {
-				if "1" == proxie {
-					groupProxies = groupProxies[:i]
-					var tmpGroupProxies []string
-					for _, s := range groupProxies {
-						tmpGroupProxies = append(tmpGroupProxies, s.(string))
-					}
-					tmpGroupProxies = append(tmpGroupProxies, proxies...)
-					group["proxies"] = tmpGroupProxies
-					break
+		for i, proxie := range groupProxies {
+			if "1" == proxie {
+				groupProxies = groupProxies[:i]
+				var tmpGroupProxies []string
+				for _, s := range groupProxies {
+					tmpGroupProxies = append(tmpGroupProxies, s.(string))
 				}
+				tmpGroupProxies = append(tmpGroupProxies, proxies...)
+				group["proxies"] = tmpGroupProxies
+				break
 			}
 		}
 

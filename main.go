@@ -53,6 +53,7 @@ func main() {
 	router.Use(gin.Recovery())
 
 	router.GET("/v2ray2clash", api.V2ray2Clash)
+	router.GET("/v2ray2qunx", api.V2ray2Quanx)
 	router.GET("/ssr2clashr", api.SSR2ClashR)
 
 	srv := &http.Server{

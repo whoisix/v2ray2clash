@@ -1,5 +1,6 @@
 # 功能
 * v2ray 订阅转 [clash](https://github.com/Dreamacro/clash)、[clashx](https://github.com/yichengchen/clashX)、[cfw](https://github.com/Fndroid/clash_for_windows_pkg/releases) 订阅
+* v2ray 订阅转 QuantumultX 订阅
 * ssr 订阅转 clashr 订阅
 # 主程序:
 * macOS:    clashconfig-darwin-amd64
@@ -21,9 +22,14 @@ Usage of ./clashconfig-linux-armv7:
 ```
 http://127.0.0.1:5050/v2ray2clash?sub_link=此处换成需要转换的v2ray订阅链接
 ```
+#### v2ray转QuantumultX
+```
+http://127.0.0.1:5050/v2ray2qunx?sub_link=此处换成需要转换的v2ray订阅链接
+```
 #### ssr转clashr
 ```
 http://127.0.0.1:5050/ssr2clashr?sub_link=此处换成需要转换的ssr订阅链接
 ```
+
 ## 引用:
 - [神机规则](https://github.com/ConnersHua/Profiles)

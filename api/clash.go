@@ -379,7 +379,7 @@ func V2ray2Quanx(c *gin.Context) {
 			} else {
 				qunx.OBFS = "ws"
 			}
-			qunx.OBFSHost = vmess.Add
+			qunx.OBFSHost = vmess.Host
 			qunx.OBFSURI = vmess.Path
 		}
 

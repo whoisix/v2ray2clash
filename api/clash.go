@@ -310,7 +310,21 @@ func V2ray2Clash(c *gin.Context) {
 		c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
 		return
 	}
-	c.String(http.StatusOK, string(r))
+
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	userAgent := c.Request.Header.Get("User-Agent")
+	if strings.HasPrefix(userAgent, "Mozilla") &&
+		(strings.Contains(userAgent, "Mac OS X") || strings.Contains(userAgent, "Windows")) {
+		requestURL := fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, c.Request.URL.String())
+		clashx := fmt.Sprintf("<body style=\"text-align: center\"><a href=clash://install-config?url=%s>点击导入clash</a></body>", url.PathEscape(requestURL))
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, clashx)
+	} else {
+		c.String(http.StatusOK, string(r))
+	}
 }
 
 func V2ray2Quanx(c *gin.Context) {

@@ -24,7 +24,7 @@ http://127.0.0.1:5050/v2ray2clash?sub_link=此处换成需要转换的v2ray订�
 ```
 #### v2ray转QuantumultX
 ```
-http://127.0.0.1:5050/v2ray2qunx?sub_link=此处换成需要转换的v2ray订阅链接
+http://127.0.0.1:5050/v2ray2quanx?sub_link=此处换成需要转换的v2ray订阅链接
 ```
 #### ssr转clashr
 ```

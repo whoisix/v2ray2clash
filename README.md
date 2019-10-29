@@ -30,6 +30,10 @@ http://127.0.0.1:5050/v2ray2quanx?sub_link=此处换成需要转换的v2ray订�
 ```
 http://127.0.0.1:5050/ssr2clashr?sub_link=此处换成需要转换的ssr订阅链接
 ```
+#### 测试地址
+```
+http://ne1l.tpddns.cn:5000/v2ray2clash?sub_link=此处换成需要转换的v2ray订阅链接
+```
 
 ## 引用:
 - [神机规则](https://github.com/ConnersHua/Profiles)

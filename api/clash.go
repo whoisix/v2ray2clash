@@ -399,7 +399,31 @@ func V2ray2Quanx(c *gin.Context) {
 
 		configs += qunx.ToString() + "\n"
 	}
-	c.String(http.StatusOK, configs)
+
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	userAgent := c.Request.Header.Get("User-Agent")
+	if strings.HasPrefix(userAgent, "Mozilla") &&
+		(strings.Contains(userAgent, "Mac OS X") || strings.Contains(userAgent, "Windows")) {
+		requestURL := fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, c.Request.URL.String())
+		quantumultxParams := map[string][]string{
+			"server_remote": []string{
+				fmt.Sprintf("%s, tag=Convert", requestURL),
+			},
+		}
+		b, err := json.Marshal(quantumultxParams)
+		if err != nil {
+			c.String(http.StatusBadRequest, "转换错误")
+			return
+		}
+		quantumultx := fmt.Sprintf("<body style=\"text-align: center\"><a href=quantumult-x:///update-configuration?remote-resource=%s>点击导入QuantumultX</a></body>", url.PathEscape(string(b)))
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		c.String(http.StatusOK, quantumultx)
+	} else {
+		c.String(http.StatusOK, configs)
+	}
 
 }
 

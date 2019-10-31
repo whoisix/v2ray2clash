@@ -8,7 +8,7 @@
 * Linux 64: clashconfig-linux-amd64
 * 树莓派:    clashconfig-linux-armv7
 # 使用方法:
-1. 下载解压对应系统的主程序运行，主程序默认会监听 0.0.0.0:5050，也可以使用以下参数改变默认监听的地址和端口。
+1. 下载解压对应系统的主程序运行，主程序默认会监听 0.0.0.0:5050，也可以使用以下参数改变默认监听的地址和端口。**如果运行不成功，请手动下载[神机规则](https://raw.githubusercontent.com/ConnersHua/Profiles/master/Clash/Pro.yaml)保存为ConnersHua.yaml和主程序放在一起。**
 ```
 Usage of ./clashconfig-linux-armv7:
   -h    this help
@@ -36,4 +36,4 @@ http://ne1l.tpddns.cn:5000/v2ray2clash?sub_link=此处换成需要转换的v2ray
 ```
 
 ## 引用:
-- [神机规则](https://github.com/ConnersHua/Profiles)
+- [神机规则](https://github.com/ConnersHua/Profiles/tree/master)

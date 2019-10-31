@@ -319,9 +319,8 @@ func V2ray2Clash(c *gin.Context) {
 	if strings.HasPrefix(userAgent, "Mozilla") &&
 		(strings.Contains(userAgent, "Mac OS X") || strings.Contains(userAgent, "Windows")) {
 		requestURL := fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, c.Request.URL.String())
-		clashx := fmt.Sprintf("<body style=\"text-align: center\"><a href=clash://install-config?url=%s>点击导入clash</a></body>", url.PathEscape(requestURL))
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.String(http.StatusOK, clashx)
+		clashx := fmt.Sprintf("clash://install-config?url=%s", url.PathEscape(requestURL))
+		c.Redirect(http.StatusMovedPermanently, clashx)
 	} else {
 		c.String(http.StatusOK, string(r))
 	}
@@ -418,9 +417,8 @@ func V2ray2Quanx(c *gin.Context) {
 			c.String(http.StatusBadRequest, "转换错误")
 			return
 		}
-		quantumultx := fmt.Sprintf("<body style=\"text-align: center\"><a href=quantumult-x:///update-configuration?remote-resource=%s>点击导入QuantumultX</a></body>", url.PathEscape(string(b)))
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		c.String(http.StatusOK, quantumultx)
+		quantumultx := fmt.Sprintf("quantumult-x:///update-configuration?remote-resource=%s", url.PathEscape(string(b)))
+		c.Redirect(http.StatusMovedPermanently, quantumultx)
 	} else {
 		c.String(http.StatusOK, configs)
 	}

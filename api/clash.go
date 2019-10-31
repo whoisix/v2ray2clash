@@ -2,8 +2,7 @@ package api
 
 import (
 	"bufio"
-	"context"
-	"encoding/base64"
+	"clashconfig/util"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +12,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -197,67 +195,12 @@ func (this *Clash) LoadTemplate(path string, protos []interface{}) []byte {
 
 	return d
 }
-func Base64DecodeStripped(s string) ([]byte, error) {
-	if i := len(s) % 4; i != 0 {
-		s += strings.Repeat("=", 4-i)
-	}
-	decoded, err := base64.StdEncoding.DecodeString(s)
-	if err != nil {
-		decoded, err = base64.URLEncoding.DecodeString(s)
-	}
-	return decoded, err
-}
-
-type Result struct {
-	r   *http.Response
-	err error
-}
-
-func httpGet(url string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	c := make(chan Result)
-	go func() {
-		resp, err := http.DefaultClient.Do(req)
-		c <- Result{r: resp, err: err}
-	}()
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case res := <-c:
-		defer res.r.Body.Close()
-		if res.err != nil || res.r.StatusCode != http.StatusOK {
-			return nil, err
-		}
-		s, err := ioutil.ReadAll(res.r.Body)
-		return s, err
-	}
-}
 
 func V2ray2Clash(c *gin.Context) {
-	rawURI := c.Request.URL.RawQuery
-	if !strings.HasPrefix(rawURI, "sub_link=http") {
-		c.String(http.StatusBadRequest, "sub_link=需要V2ray的订阅链接.")
-		return
-	}
-	sublink := rawURI[9:]
-	s, err := httpGet(sublink)
 
-	if nil != err {
-		c.String(http.StatusBadRequest, "sublink 不能访问")
-		return
-	}
-	decodeBody, err := Base64DecodeStripped(string(s))
-	if nil != err || !strings.HasPrefix(string(decodeBody), "vmess://") {
-		log.Println(err)
-		c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
-		return
-	}
-	scanner := bufio.NewScanner(strings.NewReader(string(decodeBody)))
+	decodeBody := c.GetString("decodebody")
+
+	scanner := bufio.NewScanner(strings.NewReader(decodeBody))
 	var vmesss []interface{}
 	for scanner.Scan() {
 		if !strings.HasPrefix(scanner.Text(), "vmess://") {
@@ -265,14 +208,14 @@ func V2ray2Clash(c *gin.Context) {
 		}
 		s := scanner.Text()[8:]
 		s = strings.TrimSpace(s)
-		vmconfig, err := Base64DecodeStripped(s)
+		vmconfig, err := util.Base64DecodeStripped(s)
 		if err != nil {
 			continue
 		}
 		vmess := Vmess{}
 		err = json.Unmarshal(vmconfig, &vmess)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 			continue
 		}
 		clashVmess := ClashVmess{}
@@ -311,14 +254,8 @@ func V2ray2Clash(c *gin.Context) {
 		return
 	}
 
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
-	}
-	userAgent := c.Request.Header.Get("User-Agent")
-	if strings.HasPrefix(userAgent, "Mozilla") &&
-		(strings.Contains(userAgent, "Mac OS X") || strings.Contains(userAgent, "Windows")) {
-		requestURL := fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, c.Request.URL.String())
+	requestURL := c.GetString("request_url")
+	if requestURL != "" {
 		clashx := fmt.Sprintf("clash://install-config?url=%s", url.PathEscape(requestURL))
 		c.Redirect(http.StatusMovedPermanently, clashx)
 	} else {
@@ -327,25 +264,9 @@ func V2ray2Clash(c *gin.Context) {
 }
 
 func V2ray2Quanx(c *gin.Context) {
-	rawURI := c.Request.URL.RawQuery
-	if !strings.HasPrefix(rawURI, "sub_link=http") {
-		c.String(http.StatusBadRequest, "sub_link=需要V2ray的订阅链接.")
-		return
-	}
-	sublink := rawURI[9:]
-	s, err := httpGet(sublink)
+	decodeBody := c.GetString("decodebody")
 
-	if nil != err {
-		c.String(http.StatusBadRequest, "sublink 不能访问")
-		return
-	}
-	decodeBody, err := Base64DecodeStripped(string(s))
-	if nil != err || !strings.HasPrefix(string(decodeBody), "vmess://") {
-		log.Println(err)
-		c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
-		return
-	}
-	scanner := bufio.NewScanner(strings.NewReader(string(decodeBody)))
+	scanner := bufio.NewScanner(strings.NewReader(decodeBody))
 	var configs string
 	for scanner.Scan() {
 		if !strings.HasPrefix(scanner.Text(), "vmess://") {
@@ -353,7 +274,7 @@ func V2ray2Quanx(c *gin.Context) {
 		}
 		s := scanner.Text()[8:]
 		s = strings.TrimSpace(s)
-		vmconfig, err := Base64DecodeStripped(s)
+		vmconfig, err := util.Base64DecodeStripped(s)
 		if err != nil {
 			continue
 		}
@@ -399,14 +320,8 @@ func V2ray2Quanx(c *gin.Context) {
 		configs += qunx.ToString() + "\n"
 	}
 
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
-	}
-	userAgent := c.Request.Header.Get("User-Agent")
-	if strings.HasPrefix(userAgent, "Mozilla") &&
-		(strings.Contains(userAgent, "Mac OS X") || strings.Contains(userAgent, "Windows")) {
-		requestURL := fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, c.Request.URL.String())
+	requestURL := c.GetString("request_url")
+	if requestURL != "" {
 		quantumultxParams := map[string][]string{
 			"server_remote": []string{
 				fmt.Sprintf("%s, tag=Convert", requestURL),
@@ -435,24 +350,9 @@ const (
 )
 
 func SSR2ClashR(c *gin.Context) {
-	rawURI := c.Request.URL.RawQuery
-	if !strings.HasPrefix(rawURI, "sub_link=http") {
-		c.String(http.StatusBadRequest, "sub_link=需要SSR的订阅链接.")
-		return
-	}
-	sublink := rawURI[9:]
-	s, err := httpGet(sublink)
-	if nil != err {
-		c.String(http.StatusBadRequest, "sublink 不能访问")
-		return
-	}
-	decodeBody, err := Base64DecodeStripped(string(s))
-	if nil != err || !strings.HasPrefix(string(decodeBody), "ssr://") {
-		log.Println(err)
-		c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
-		return
-	}
-	scanner := bufio.NewScanner(strings.NewReader(string(decodeBody)))
+	decodeBody := c.GetString("decodebody")
+
+	scanner := bufio.NewScanner(strings.NewReader(decodeBody))
 	var ssrs []interface{}
 	for scanner.Scan() {
 		if !strings.HasPrefix(scanner.Text(), "ssr://") {
@@ -460,7 +360,7 @@ func SSR2ClashR(c *gin.Context) {
 		}
 		s := scanner.Text()[6:]
 		s = strings.TrimSpace(s)
-		rawSSRConfig, err := Base64DecodeStripped(s)
+		rawSSRConfig, err := util.Base64DecodeStripped(s)
 		if err != nil {
 			continue
 		}
@@ -481,7 +381,7 @@ func SSR2ClashR(c *gin.Context) {
 			continue
 		}
 		passwordBase64 := suffix[0]
-		password, err := Base64DecodeStripped(passwordBase64)
+		password, err := util.Base64DecodeStripped(passwordBase64)
 		if err != nil {
 			continue
 		}
@@ -492,7 +392,7 @@ func SSR2ClashR(c *gin.Context) {
 			continue
 		}
 		for k, v := range m {
-			de, err := Base64DecodeStripped(v[0])
+			de, err := util.Base64DecodeStripped(v[0])
 			if err != nil {
 				continue
 			}

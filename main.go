@@ -2,6 +2,7 @@ package main
 
 import (
 	"clashconfig/api"
+	"clashconfig/middleware"
 	"context"
 	"flag"
 	"fmt"
@@ -51,6 +52,7 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+	router.Use(middleware.PreMiddleware())
 
 	router.GET("/v2ray2clash", api.V2ray2Clash)
 	router.GET("/v2ray2quanx", api.V2ray2Quanx)

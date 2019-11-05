@@ -16,6 +16,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	listenAddr string
+	listenPort string
+	h          bool
+)
+
+func init() {
+	flag.BoolVar(&h, "h", false, "help")
+	flag.StringVar(&listenAddr, "l", "0.0.0.0", "listen address")
+	flag.StringVar(&listenPort, "p", "5050", "listen port")
+	flag.Parse()
+}
+
 func DownLoadTemplate(url string, path string) {
 	log.Printf("Rule template URL: %s", url)
 	log.Println("Start downloading the rules template")
@@ -32,13 +45,6 @@ func DownLoadTemplate(url string, path string) {
 	log.Printf("Rules template download complete. [%s]\n", path)
 }
 func main() {
-	var listenAddr string
-	var listenPort string
-	var h bool
-	flag.BoolVar(&h, "h", false, "this help")
-	flag.StringVar(&listenAddr, "l", "0.0.0.0", "Listen address")
-	flag.StringVar(&listenPort, "p", "5050", "Listen Port")
-	flag.Parse()
 
 	if h {
 		flag.Usage()

@@ -20,7 +20,7 @@ import (
 
 type Vmess struct {
 	Add  string      `json:"add"`
-	Aid  int         `json:"aid"`
+	Aid  interface{} `json:"aid"`
 	Host string      `json:"host"`
 	ID   string      `json:"id"`
 	Net  string      `json:"net"`
@@ -38,7 +38,7 @@ type ClashVmess struct {
 	Server         string            `json:"server,omitempty"`
 	Port           interface{}       `json:"port,omitempty"`
 	UUID           string            `json:"uuid,omitempty"`
-	AlterID        int               `json:"alterId,omitempty"`
+	AlterID        interface{}       `json:"alterId,omitempty"`
 	Cipher         string            `json:"cipher,omitempty"`
 	TLS            bool              `json:"tls,omitempty"`
 	Network        string            `json:"network,omitempty"`

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -215,70 +216,83 @@ const (
 )
 
 func SSR2ClashR(c *gin.Context) {
-	decodeBody := c.GetString("decodebody")
+	decodeBodyInterface, _ := c.Get("decodebody")
 
-	scanner := bufio.NewScanner(strings.NewReader(decodeBody))
+	decodeBodySlice := decodeBodyInterface.([]string)
+
 	var ssrs []interface{}
-	for scanner.Scan() {
-		if !strings.HasPrefix(scanner.Text(), "ssr://") {
-			continue
-		}
-		s := scanner.Text()[6:]
-		s = strings.TrimSpace(s)
-		rawSSRConfig, err := util.Base64DecodeStripped(s)
-		if err != nil {
-			continue
-		}
-		params := strings.Split(string(rawSSRConfig), `:`)
-		if 6 != len(params) {
-			continue
-		}
-		ssr := ClashRSSR{}
-		ssr.Type = "ssr"
-		ssr.Server = params[SSRServer]
-		ssr.Port = params[SSRPort]
-		ssr.Protocol = params[SSRProtocol]
-		ssr.Cipher = params[SSRCipher]
-		ssr.OBFS = params[SSROBFS]
-
-		suffix := strings.Split(params[SSRSuffix], "/?")
-		if 2 != len(suffix) {
-			continue
-		}
-		passwordBase64 := suffix[0]
-		password, err := util.Base64DecodeStripped(passwordBase64)
-		if err != nil {
-			continue
-		}
-		ssr.Password = string(password)
-
-		m, err := url.ParseQuery(suffix[1])
-		if err != nil {
-			continue
-		}
-
-		for k, v := range m {
-			de, err := util.Base64DecodeStripped(v[0])
+	filterMap := make(map[string]int)
+	for _, v := range decodeBodySlice {
+		scanner := bufio.NewScanner(strings.NewReader(v))
+		for scanner.Scan() {
+			if !strings.HasPrefix(scanner.Text(), "ssr://") {
+				continue
+			}
+			s := scanner.Text()[6:]
+			s = strings.TrimSpace(s)
+			rawSSRConfig, err := util.Base64DecodeStripped(s)
 			if err != nil {
 				continue
 			}
-			switch k {
-			case "obfsparam":
-				ssr.OBFSParam = string(de)
-				continue
-			case "protoparam":
-				ssr.ProtocolParam = string(de)
-				continue
-			case "remarks":
-				ssr.Name = string(de)
-				continue
-			case "group":
+			params := strings.Split(string(rawSSRConfig), `:`)
+			if 6 != len(params) {
 				continue
 			}
-		}
+			ssr := ClashRSSR{}
+			ssr.Type = "ssr"
+			ssr.Server = params[SSRServer]
+			ssr.Port = params[SSRPort]
+			ssr.Protocol = params[SSRProtocol]
+			ssr.Cipher = params[SSRCipher]
+			ssr.OBFS = params[SSROBFS]
 
-		ssrs = append(ssrs, ssr)
+			suffix := strings.Split(params[SSRSuffix], "/?")
+			if 2 != len(suffix) {
+				continue
+			}
+			passwordBase64 := suffix[0]
+			password, err := util.Base64DecodeStripped(passwordBase64)
+			if err != nil {
+				continue
+			}
+			ssr.Password = string(password)
+
+			m, err := url.ParseQuery(suffix[1])
+			if err != nil {
+				continue
+			}
+
+			for k, v := range m {
+				de, err := util.Base64DecodeStripped(v[0])
+				if err != nil {
+					continue
+				}
+				switch k {
+				case "obfsparam":
+					ssr.OBFSParam = string(de)
+					continue
+				case "protoparam":
+					ssr.ProtocolParam = string(de)
+					continue
+				case "remarks":
+					ssr.Name = string(de)
+					ssrName := ssr.Name
+					if v, ok := filterMap[ssrName]; ok {
+						v++
+						filterMap[ssrName] = v
+						ssr.Name = ssrName + strconv.Itoa(v)
+					} else {
+						filterMap[ssrName] = 0
+					}
+					continue
+				case "group":
+					continue
+				}
+			}
+			ssrs = append(ssrs, ssr)
+		}
 	}
+
 	clash := Clash{}
 	r := clash.LoadTemplate("ConnersHua.yaml", ssrs)
 	if r == nil {

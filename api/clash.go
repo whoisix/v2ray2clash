@@ -221,8 +221,16 @@ func SSR2ClashR(c *gin.Context) {
 	decodeBodySlice := decodeBodyInterface.([]string)
 
 	var ssrs []interface{}
-	filterMap := make(map[string]int)
+	filterNodeMap := make(map[string]int)
+	FilterSubLinkMap := make(map[string]struct{})
 	for _, v := range decodeBodySlice {
+
+		// 过滤重复订阅链接
+		if _, ok := FilterSubLinkMap[v]; ok {
+			continue
+		}
+		FilterSubLinkMap[v] = struct{}{}
+
 		scanner := bufio.NewScanner(strings.NewReader(v))
 		for scanner.Scan() {
 			if !strings.HasPrefix(scanner.Text(), "ssr://") {
@@ -246,19 +254,19 @@ func SSR2ClashR(c *gin.Context) {
 			ssr.Cipher = params[SSRCipher]
 			ssr.OBFS = params[SSROBFS]
 
-		// 如果兼容ss协议，就转换为clash的ss配置
-		// https://github.com/Dreamacro/clash
-		if "origin" == ssr.Protocol && "plain" == ssr.OBFS {
-			switch ssr.Cipher {
-			case "aes-128-gcm", "aes-192-gcm", "aes-256-gcm",
-				"aes-128-cfb", "aes-192-cfb", "aes-256-cfb",
-				"aes-128-ctr", "aes-192-ctr", "aes-256-ctr",
-				"rc4-md5", "chacha20", "chacha20-ietf", "xchacha20",
-				"chacha20-ietf-poly1305", "xchacha20-ietf-poly1305":
-				ssr.Type = "ss"
+			// 如果兼容ss协议，就转换为clash的ss配置
+			// https://github.com/Dreamacro/clash
+			if "origin" == ssr.Protocol && "plain" == ssr.OBFS {
+				switch ssr.Cipher {
+				case "aes-128-gcm", "aes-192-gcm", "aes-256-gcm",
+					"aes-128-cfb", "aes-192-cfb", "aes-256-cfb",
+					"aes-128-ctr", "aes-192-ctr", "aes-256-ctr",
+					"rc4-md5", "chacha20", "chacha20-ietf", "xchacha20",
+					"chacha20-ietf-poly1305", "xchacha20-ietf-poly1305":
+					ssr.Type = "ss"
+				}
 			}
-		}
-		suffix := strings.Split(params[SSRSuffix], "/?")
+			suffix := strings.Split(params[SSRSuffix], "/?")
 			if 2 != len(suffix) {
 				continue
 			}
@@ -289,12 +297,12 @@ func SSR2ClashR(c *gin.Context) {
 				case "remarks":
 					ssr.Name = string(de)
 					ssrName := ssr.Name
-					if v, ok := filterMap[ssrName]; ok {
+					if v, ok := filterNodeMap[ssrName]; ok {
 						v++
-						filterMap[ssrName] = v
+						filterNodeMap[ssrName] = v
 						ssr.Name = ssrName + strconv.Itoa(v)
 					} else {
-						filterMap[ssrName] = 0
+						filterNodeMap[ssrName] = 0
 					}
 					continue
 				case "group":

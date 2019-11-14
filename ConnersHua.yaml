@@ -1668,6 +1668,7 @@ Rule:
   - DOMAIN-SUFFIX,zhuihd.com,DIRECT
   - DOMAIN,download.jetbrains.com,DIRECT
   - DOMAIN,images-cn.ssl-images-amazon.com,DIRECT
+  - DOMAIN-KEYWORD,dev,DIRECT
   - IP-CIDR,119.28.28.28/32,DIRECT
   - GEOIP,CN,DIRECT
   - MATCH,💕 规则自选

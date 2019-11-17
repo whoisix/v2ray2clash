@@ -86,8 +86,8 @@ Proxy Group:
   - name: 🌏 港台媒体
     type: select
     proxies:
-      - 🔰 节点选择
       - DIRECT
+      - 🔰 节点选择
       - "1"
   - name: 📲 电报信息
     type: select

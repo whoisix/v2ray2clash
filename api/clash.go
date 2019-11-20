@@ -309,6 +309,12 @@ func SSR2ClashR(c *gin.Context) {
 					continue
 				}
 			}
+
+			// 过滤学术节点
+			if strings.Contains(ssr.Name,"中转规则") {
+				continue
+			}
+
 			ssrs = append(ssrs, ssr)
 		}
 	}

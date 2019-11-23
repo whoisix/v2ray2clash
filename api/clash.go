@@ -140,55 +140,76 @@ func (this *Clash) LoadTemplate(path string, protos []interface{}) []byte {
 }
 
 func V2ray2Clash(c *gin.Context) {
+	decodeBodyInterface, _ := c.Get("decodebody")
 
-	decodeBody := c.GetString("decodebody")
+	decodeBodySlice := decodeBodyInterface.([]string)
 
-	scanner := bufio.NewScanner(strings.NewReader(decodeBody))
 	var vmesss []interface{}
-	for scanner.Scan() {
-		if !strings.HasPrefix(scanner.Text(), "vmess://") {
+	filterNodeMap := make(map[string]int)
+	FilterSubLinkMap := make(map[string]struct{})
+	for _, v := range decodeBodySlice {
+
+		// 过滤重复订阅链接
+		if _, ok := FilterSubLinkMap[v]; ok {
 			continue
 		}
-		s := scanner.Text()[8:]
-		s = strings.TrimSpace(s)
-		vmconfig, err := util.Base64DecodeStripped(s)
-		if err != nil {
-			continue
-		}
-		vmess := Vmess{}
-		err = json.Unmarshal(vmconfig, &vmess)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		clashVmess := ClashVmess{}
-		clashVmess.Name = vmess.PS
-		clashVmess.Type = "vmess"
-		clashVmess.Server = vmess.Add
-		switch vmess.Port.(type) {
-		case string:
-			clashVmess.Port, _ = vmess.Port.(string)
-		case int:
-			clashVmess.Port, _ = vmess.Port.(int)
-		case float64:
-			clashVmess.Port, _ = vmess.Port.(float64)
-		default:
-			continue
-		}
-		clashVmess.UUID = vmess.ID
-		clashVmess.AlterID = vmess.Aid
-		clashVmess.Cipher = vmess.Type
-		if "" != vmess.TLS {
-			clashVmess.TLS = true
-		} else {
-			clashVmess.TLS = false
-		}
-		if "ws" == vmess.Net {
-			clashVmess.Network = vmess.Net
-			clashVmess.WSPATH = vmess.Path
+		FilterSubLinkMap[v] = struct{}{}
+
+		scanner := bufio.NewScanner(strings.NewReader(v))
+		for scanner.Scan() {
+			if !strings.HasPrefix(scanner.Text(), "vmess://") {
+				continue
+			}
+			s := scanner.Text()[8:]
+			s = strings.TrimSpace(s)
+			vmconfig, err := util.Base64DecodeStripped(s)
+			if err != nil {
+				continue
+			}
+			vmess := Vmess{}
+			err = json.Unmarshal(vmconfig, &vmess)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			clashVmess := ClashVmess{}
+			clashVmess.Name = vmess.PS
+			if v, ok := filterNodeMap[clashVmess.Name]; ok {
+				v++
+				filterNodeMap[clashVmess.Name] = v
+				clashVmess.Name = clashVmess.Name + strconv.Itoa(v)
+			} else {
+				filterNodeMap[clashVmess.Name] = 0
+			}
+
+			clashVmess.Type = "vmess"
+			clashVmess.Server = vmess.Add
+			switch vmess.Port.(type) {
+			case string:
+				clashVmess.Port, _ = vmess.Port.(string)
+			case int:
+				clashVmess.Port, _ = vmess.Port.(int)
+			case float64:
+				clashVmess.Port, _ = vmess.Port.(float64)
+			default:
+				continue
+			}
+			clashVmess.UUID = vmess.ID
+			clashVmess.AlterID = vmess.Aid
+			clashVmess.Cipher = vmess.Type
+			if "" != vmess.TLS {
+				clashVmess.TLS = true
+			} else {
+				clashVmess.TLS = false
+			}
+			if "ws" == vmess.Net {
+				clashVmess.Network = vmess.Net
+				clashVmess.WSPATH = vmess.Path
+			}
+
+			vmesss = append(vmesss, clashVmess)
 		}
 
-		vmesss = append(vmesss, clashVmess)
 	}
 	clash := Clash{}
 	r := clash.LoadTemplate("ConnersHua.yaml", vmesss)

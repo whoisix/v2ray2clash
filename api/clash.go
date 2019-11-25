@@ -157,57 +157,14 @@ func V2ray2Clash(c *gin.Context) {
 
 		scanner := bufio.NewScanner(strings.NewReader(v))
 		for scanner.Scan() {
-			if !strings.HasPrefix(scanner.Text(), "vmess://") {
-				continue
+			if strings.HasPrefix(scanner.Text(), "vmess://") {
+				s := scanner.Text()[8:]
+				s = strings.TrimSpace(s)
+				clashVmess := v2rConf(s, filterNodeMap)
+				if clashVmess.Name != "" {
+					vmesss = append(vmesss, clashVmess)
+				}
 			}
-			s := scanner.Text()[8:]
-			s = strings.TrimSpace(s)
-			vmconfig, err := util.Base64DecodeStripped(s)
-			if err != nil {
-				continue
-			}
-			vmess := Vmess{}
-			err = json.Unmarshal(vmconfig, &vmess)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			clashVmess := ClashVmess{}
-			clashVmess.Name = vmess.PS
-			if v, ok := filterNodeMap[clashVmess.Name]; ok {
-				v++
-				filterNodeMap[clashVmess.Name] = v
-				clashVmess.Name = clashVmess.Name + strconv.Itoa(v)
-			} else {
-				filterNodeMap[clashVmess.Name] = 0
-			}
-
-			clashVmess.Type = "vmess"
-			clashVmess.Server = vmess.Add
-			switch vmess.Port.(type) {
-			case string:
-				clashVmess.Port, _ = vmess.Port.(string)
-			case int:
-				clashVmess.Port, _ = vmess.Port.(int)
-			case float64:
-				clashVmess.Port, _ = vmess.Port.(float64)
-			default:
-				continue
-			}
-			clashVmess.UUID = vmess.ID
-			clashVmess.AlterID = vmess.Aid
-			clashVmess.Cipher = vmess.Type
-			if "" != vmess.TLS {
-				clashVmess.TLS = true
-			} else {
-				clashVmess.TLS = false
-			}
-			if "ws" == vmess.Net {
-				clashVmess.Network = vmess.Net
-				clashVmess.WSPATH = vmess.Path
-			}
-
-			vmesss = append(vmesss, clashVmess)
 		}
 
 	}
@@ -225,6 +182,55 @@ func V2ray2Clash(c *gin.Context) {
 	} else {
 		c.String(http.StatusOK, util.UnicodeEmojiDecode(string(r)))
 	}
+}
+
+func v2rConf(s string, filterNodeMap map[string]int) ClashVmess {
+	vmconfig, err := util.Base64DecodeStripped(s)
+	if err != nil {
+		return ClashVmess{}
+	}
+	vmess := Vmess{}
+	err = json.Unmarshal(vmconfig, &vmess)
+	if err != nil {
+		log.Println(err)
+		return ClashVmess{}
+	}
+	clashVmess := ClashVmess{}
+	clashVmess.Name = vmess.PS
+	if v, ok := filterNodeMap[clashVmess.Name]; ok {
+		v++
+		filterNodeMap[clashVmess.Name] = v
+		clashVmess.Name = clashVmess.Name + strconv.Itoa(v)
+	} else {
+		filterNodeMap[clashVmess.Name] = 0
+	}
+
+	clashVmess.Type = "vmess"
+	clashVmess.Server = vmess.Add
+	switch vmess.Port.(type) {
+	case string:
+		clashVmess.Port, _ = vmess.Port.(string)
+	case int:
+		clashVmess.Port, _ = vmess.Port.(int)
+	case float64:
+		clashVmess.Port, _ = vmess.Port.(float64)
+	default:
+
+	}
+	clashVmess.UUID = vmess.ID
+	clashVmess.AlterID = vmess.Aid
+	clashVmess.Cipher = vmess.Type
+	if "" != vmess.TLS {
+		clashVmess.TLS = true
+	} else {
+		clashVmess.TLS = false
+	}
+	if "ws" == vmess.Net {
+		clashVmess.Network = vmess.Net
+		clashVmess.WSPATH = vmess.Path
+	}
+
+	return clashVmess
 }
 
 const (
@@ -254,94 +260,146 @@ func SSR2ClashR(c *gin.Context) {
 
 		scanner := bufio.NewScanner(strings.NewReader(v))
 		for scanner.Scan() {
-			if !strings.HasPrefix(scanner.Text(), "ssr://") {
-				continue
-			}
-			s := scanner.Text()[6:]
-			s = strings.TrimSpace(s)
-			rawSSRConfig, err := util.Base64DecodeStripped(s)
-			if err != nil {
-				continue
-			}
-			params := strings.Split(string(rawSSRConfig), `:`)
-			if 6 != len(params) {
-				continue
-			}
-			ssr := ClashRSSR{}
-			ssr.Type = "ssr"
-			ssr.Server = params[SSRServer]
-			ssr.Port = params[SSRPort]
-			ssr.Protocol = params[SSRProtocol]
-			ssr.Cipher = params[SSRCipher]
-			ssr.OBFS = params[SSROBFS]
-
-			// 如果兼容ss协议，就转换为clash的ss配置
-			// https://github.com/Dreamacro/clash
-			if "origin" == ssr.Protocol && "plain" == ssr.OBFS {
-				switch ssr.Cipher {
-				case "aes-128-gcm", "aes-192-gcm", "aes-256-gcm",
-					"aes-128-cfb", "aes-192-cfb", "aes-256-cfb",
-					"aes-128-ctr", "aes-192-ctr", "aes-256-ctr",
-					"rc4-md5", "chacha20", "chacha20-ietf", "xchacha20",
-					"chacha20-ietf-poly1305", "xchacha20-ietf-poly1305":
-					ssr.Type = "ss"
+			if strings.HasPrefix(scanner.Text(), "ssr://") {
+				s := scanner.Text()[6:]
+				s = strings.TrimSpace(s)
+				ssr := ssrConf(s, filterNodeMap)
+				if ssr.Name != "" {
+					ssrs = append(ssrs, ssr)
 				}
 			}
-			suffix := strings.Split(params[SSRSuffix], "/?")
-			if 2 != len(suffix) {
-				continue
-			}
-			passwordBase64 := suffix[0]
-			password, err := util.Base64DecodeStripped(passwordBase64)
-			if err != nil {
-				continue
-			}
-			ssr.Password = string(password)
-
-			m, err := url.ParseQuery(suffix[1])
-			if err != nil {
-				continue
-			}
-
-			for k, v := range m {
-				de, err := util.Base64DecodeStripped(v[0])
-				if err != nil {
-					continue
-				}
-				switch k {
-				case "obfsparam":
-					ssr.OBFSParam = string(de)
-					continue
-				case "protoparam":
-					ssr.ProtocolParam = string(de)
-					continue
-				case "remarks":
-					ssr.Name = string(de)
-					ssrName := ssr.Name
-					if v, ok := filterNodeMap[ssrName]; ok {
-						v++
-						filterNodeMap[ssrName] = v
-						ssr.Name = ssrName + strconv.Itoa(v)
-					} else {
-						filterNodeMap[ssrName] = 0
-					}
-					continue
-				case "group":
-					continue
-				}
-			}
-
-			// 过滤学术节点
-			if strings.Contains(ssr.Name,"中转规则") {
-				continue
-			}
-
-			ssrs = append(ssrs, ssr)
 		}
 	}
 
 	clash := Clash{}
 	r := clash.LoadTemplate("ConnersHua.yaml", ssrs)
+	if r == nil {
+		c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
+		return
+	}
+	c.String(http.StatusOK, util.UnicodeEmojiDecode(string(r)))
+}
+
+func ssrConf(s string, filterNodeMap map[string]int) ClashRSSR {
+	rawSSRConfig, err := util.Base64DecodeStripped(s)
+	if err != nil {
+		return ClashRSSR{}
+	}
+	params := strings.Split(string(rawSSRConfig), `:`)
+	if 6 != len(params) {
+		return ClashRSSR{}
+	}
+	ssr := ClashRSSR{}
+	ssr.Type = "ssr"
+	ssr.Server = params[SSRServer]
+	ssr.Port = params[SSRPort]
+	ssr.Protocol = params[SSRProtocol]
+	ssr.Cipher = params[SSRCipher]
+	ssr.OBFS = params[SSROBFS]
+
+	// 如果兼容ss协议，就转换为clash的ss配置
+	// https://github.com/Dreamacro/clash
+	if "origin" == ssr.Protocol && "plain" == ssr.OBFS {
+		switch ssr.Cipher {
+		case "aes-128-gcm", "aes-192-gcm", "aes-256-gcm",
+			"aes-128-cfb", "aes-192-cfb", "aes-256-cfb",
+			"aes-128-ctr", "aes-192-ctr", "aes-256-ctr",
+			"rc4-md5", "chacha20", "chacha20-ietf", "xchacha20",
+			"chacha20-ietf-poly1305", "xchacha20-ietf-poly1305":
+			ssr.Type = "ss"
+		}
+	}
+	suffix := strings.Split(params[SSRSuffix], "/?")
+	if 2 != len(suffix) {
+		return ClashRSSR{}
+	}
+	passwordBase64 := suffix[0]
+	password, err := util.Base64DecodeStripped(passwordBase64)
+	if err != nil {
+		return ClashRSSR{}
+	}
+	ssr.Password = string(password)
+
+	m, err := url.ParseQuery(suffix[1])
+	if err != nil {
+		return ClashRSSR{}
+	}
+
+	for k, v := range m {
+		de, err := util.Base64DecodeStripped(v[0])
+		if err != nil {
+			return ClashRSSR{}
+		}
+		switch k {
+		case "obfsparam":
+			ssr.OBFSParam = string(de)
+			continue
+		case "protoparam":
+			ssr.ProtocolParam = string(de)
+			continue
+		case "remarks":
+			ssr.Name = string(de)
+			ssrName := ssr.Name
+			if v, ok := filterNodeMap[ssrName]; ok {
+				v++
+				filterNodeMap[ssrName] = v
+				ssr.Name = ssrName + strconv.Itoa(v)
+			} else {
+				filterNodeMap[ssrName] = 0
+			}
+			continue
+		case "group":
+			continue
+		}
+	}
+
+	// 过滤学术节点
+	if strings.Contains(ssr.Name, "中转规则") {
+		return ClashRSSR{}
+	}
+
+	return ssr
+}
+
+func SSRV2R(c *gin.Context) {
+	decodeBodyInterface, _ := c.Get("decodebody")
+
+	decodeBodySlice := decodeBodyInterface.([]string)
+
+	var proxis []interface{}
+	filterNodeMap := make(map[string]int)
+	FilterSubLinkMap := make(map[string]struct{})
+	for _, v := range decodeBodySlice {
+
+		// 过滤重复订阅链接
+		if _, ok := FilterSubLinkMap[v]; ok {
+			continue
+		}
+		FilterSubLinkMap[v] = struct{}{}
+
+		scanner := bufio.NewScanner(strings.NewReader(v))
+		for scanner.Scan() {
+			switch {
+			case strings.HasPrefix(scanner.Text(), "ssr://"):
+				s := scanner.Text()[6:]
+				s = strings.TrimSpace(s)
+				ssr := ssrConf(s, filterNodeMap)
+				if ssr.Name != "" {
+					proxis = append(proxis, ssr)
+				}
+			case strings.HasPrefix(scanner.Text(), "vmess://"):
+				s := scanner.Text()[8:]
+				s = strings.TrimSpace(s)
+				clashVmess := v2rConf(s, filterNodeMap)
+				if clashVmess.Name != "" {
+					proxis = append(proxis, clashVmess)
+				}
+			}
+		}
+	}
+
+	clash := Clash{}
+	r := clash.LoadTemplate("ConnersHua.yaml", proxis)
 	if r == nil {
 		c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
 		return

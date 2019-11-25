@@ -49,7 +49,6 @@ Proxy Group:
     name: ♻️ 自动选择
     type: url-test
     proxies:
-      - DIRECT
       - "1"
   - name: 🌌 YouTube
     type: select

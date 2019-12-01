@@ -36,7 +36,6 @@ cfw-bypass:
   - 192.168.*
   - <local>
   - dev.*
-  - qq.com
 Proxy: ~
 Proxy Group:
   - name: 🔰 节点选择
@@ -87,8 +86,8 @@ Proxy Group:
   - name: 🌏 港台媒体
     type: select
     proxies:
-      - 🔰 节点选择
       - DIRECT
+      - 🔰 节点选择
       - "1"
   - name: 📲 电报信息
     type: select
@@ -1671,4 +1670,9 @@ Rule:
   - DOMAIN,images-cn.ssl-images-amazon.com,DIRECT
   - IP-CIDR,119.28.28.28/32,DIRECT
   - GEOIP,CN,DIRECT
+
+  # 自定以
+  - DOMAIN-KEYWORD,dev,DIRECT
+  - DOMAIN-KEYWORD,hostbuf,⛔️ 广告拦截
+
   - MATCH,💕 规则自选

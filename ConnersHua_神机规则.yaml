@@ -1465,7 +1465,6 @@ Rule:
   - DOMAIN-SUFFIX,godic.net,DIRECT
   - DOMAIN-SUFFIX,hicloud.com,DIRECT
   - DOMAIN-SUFFIX,hongxiu.com,DIRECT
-  - DOMAIN-SUFFIX,hostbuf.com,DIRECT
   - DOMAIN-SUFFIX,huxiucdn.com,DIRECT
   - DOMAIN-SUFFIX,huya.com,DIRECT
   - DOMAIN-SUFFIX,infinitynewtab.com,DIRECT
@@ -1678,7 +1677,7 @@ Rule:
   - GEOIP,CN,DIRECT
 
   # 自定义
-  - DOMAIN-KEYWORD,hostbuf,Hijacking
   - DOMAIN-KEYWORD,dev,DIRECT
+  - DOMAIN-SUFFIX,hostbuf.com,Hijacking
 
   - MATCH,Final

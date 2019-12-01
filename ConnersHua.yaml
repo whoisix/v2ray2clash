@@ -125,6 +125,7 @@ Rule:
   - DOMAIN,analytics.strava.com,DIRECT
   - DOMAIN,msg.umeng.com,DIRECT
   - DOMAIN,msg.umengcloud.com,DIRECT
+  - DOMAIN-KEYWORD,hostbuf,⛔️ 广告拦截
   - DOMAIN-KEYWORD,adservice,⛔️ 广告拦截
   - DOMAIN-KEYWORD,analytics,⛔️ 广告拦截
   - DOMAIN-KEYWORD,analysis,⛔️ 广告拦截

@@ -72,13 +72,15 @@ func PreMiddleware() gin.HandlerFunc {
 				return
 			}
 			protoPrefix := "vmess://"
+			protoCheck := true
 			switch c.Request.URL.Path {
 			case "/ssr2clashr":
 				protoPrefix = "ssr://"
-
+			case "/ssrv2toclashr":
+				protoCheck = false
 			}
 			decodeBody, err := util.Base64DecodeStripped(string(s))
-			if nil != err || !strings.HasPrefix(string(decodeBody), protoPrefix) {
+			if nil != err || (!strings.HasPrefix(string(decodeBody), protoPrefix) && protoCheck) {
 				log.Println(err)
 				c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
 				c.Abort()

@@ -1672,7 +1672,7 @@ Rule:
 
   # 自定以
   - DOMAIN-KEYWORD,dev,DIRECT
-  - DOMAIN-SUFFIX,hostbuf.com,⛔️ 广告拦截
+  - DOMAIN-SUFFIX,hostbuf.com,DIRECT
 
 
   - MATCH,💕 规则自选

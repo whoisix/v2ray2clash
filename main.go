@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	//u "net/url"
 	"os"
 	"os/signal"
 	"time"
@@ -34,8 +35,8 @@ func DownLoadTemplate(url string, path string) {
 	log.Println("Start downloading the rules template")
 
 	// 代理
-	/*proxy := func(_ *http.Request) (*nurl.URL, error) {
-		return nurl.Parse("http://127.0.0.1:1087")
+	/*proxy := func(_ *http.Request) (*u.URL, error) {
+		return u.Parse("http://127.0.0.1:7890")
 	}
 
 	transport := &http.Transport{Proxy: proxy}
@@ -70,6 +71,7 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
+	router.Use(middleware.Logging())
 	router.Use(middleware.PreMiddleware())
 
 	router.GET("/v2ray2clash", api.V2ray2Clash)

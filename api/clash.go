@@ -401,7 +401,7 @@ func ssConf(s string, filterNodeMap map[string]int) ClashSS {
 
 	chunk2 := strings.Split(chunk1[1], ";")
 	ss.Plugin = strings.Split(chunk2[0], "=")[1]
-	switch  {
+	switch {
 	case strings.HasPrefix(ss.Plugin, "obfs"):
 		ss.Plugin = "obfs"
 	}
@@ -435,6 +435,8 @@ func ssConf(s string, filterNodeMap map[string]int) ClashSS {
 func SSRV2R(c *gin.Context) {
 	decodeBodyInterface, _ := c.Get("decodebody")
 
+	isClash := c.Query("clash")
+
 	decodeBodySlice := decodeBodyInterface.([]string)
 
 	var proxis []interface{}
@@ -452,6 +454,9 @@ func SSRV2R(c *gin.Context) {
 		for scanner.Scan() {
 			switch {
 			case strings.HasPrefix(scanner.Text(), "ssr://"):
+				if isClash == "1" {
+					continue
+				}
 				s := scanner.Text()[6:]
 				s = strings.TrimSpace(s)
 				ssr := ssrConf(s, filterNodeMap)

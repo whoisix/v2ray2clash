@@ -61,6 +61,22 @@ type ClashRSSR struct {
 	OBFSParam     string      `json:"obfsparam"`
 }
 
+type ClashSS struct {
+	Name       string      `json:"name"`
+	Type       string      `json:"type"`
+	Server     string      `json:"server"`
+	Port       interface{} `json:"port"`
+	Password   string      `json:"password"`
+	Cipher     string      `json:"cipher"`
+	Plugin     string      `json:"plugin"`
+	PluginOpts PluginOpts  `json:"plugin-opts"`
+}
+
+type PluginOpts struct {
+	Mode string `json:"mode"`
+	Host string `json:"host"`
+}
+
 type Clash struct {
 	Port      int `yaml:"port"`
 	SocksPort int `yaml:"socks-port"`
@@ -361,6 +377,61 @@ func ssrConf(s string, filterNodeMap map[string]int) ClashRSSR {
 	return ssr
 }
 
+func ssConf(s string, filterNodeMap map[string]int) ClashSS {
+	sp := strings.Split(s, "@")
+	rawSSRConfig, err := util.Base64DecodeStripped(sp[0])
+	if err != nil {
+		return ClashSS{}
+	}
+	params := strings.Split(string(rawSSRConfig), `:`)
+	if 2 != len(params) {
+		return ClashSS{}
+	}
+
+	ss := ClashSS{}
+	ss.Type = "ss"
+	ss.Cipher = params[0]
+	ss.Password = params[1]
+	unescape, err := url.PathUnescape(sp[1])
+
+	chunk1 := strings.Split(unescape, "?")
+	add := strings.Split(chunk1[0], ":")
+	ss.Server = add[0]
+	ss.Port = add[1]
+
+	chunk2 := strings.Split(chunk1[1], ";")
+	ss.Plugin = strings.Split(chunk2[0], "=")[1]
+	switch  {
+	case strings.HasPrefix(ss.Plugin, "obfs"):
+		ss.Plugin = "obfs"
+	}
+
+	chunk3 := strings.Split(chunk2[1], "#")
+	if len(chunk3) < 2 {
+		return ClashSS{}
+	}
+
+	chunk4 := strings.Split(chunk3[0], ";")
+	p := PluginOpts{
+		Mode: strings.Split(chunk4[0], "=")[1],
+	}
+	if len(chunk4) > 1 {
+		p.Host = strings.Split(chunk4[1], "=")[1]
+	}
+
+	ss.Name = chunk3[1]
+	ss.PluginOpts = p
+	if v, ok := filterNodeMap[chunk3[1]]; ok {
+		v++
+		filterNodeMap[chunk3[1]] = v
+		ss.Name = chunk3[1] + strconv.Itoa(v)
+	} else {
+		filterNodeMap[chunk3[1]] = 0
+	}
+
+	return ss
+}
+
 func SSRV2R(c *gin.Context) {
 	decodeBodyInterface, _ := c.Get("decodebody")
 
@@ -393,6 +464,13 @@ func SSRV2R(c *gin.Context) {
 				clashVmess := v2rConf(s, filterNodeMap)
 				if clashVmess.Name != "" {
 					proxis = append(proxis, clashVmess)
+				}
+			case strings.HasPrefix(scanner.Text(), "ss://"):
+				s := scanner.Text()[5:]
+				s = strings.TrimSpace(s)
+				ss := ssConf(s, filterNodeMap)
+				if ss.Name != "" {
+					proxis = append(proxis, ss)
 				}
 			}
 		}

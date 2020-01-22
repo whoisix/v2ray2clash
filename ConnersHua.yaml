@@ -1673,6 +1673,7 @@ Rule:
 
   # 自定以
   - DOMAIN-KEYWORD,dev,DIRECT
+  - DOMAIN,account.jetbrains.com,⛔️ 广告拦截
 
 
   - MATCH,💕 规则自选

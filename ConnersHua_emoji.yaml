@@ -1673,7 +1673,7 @@ Rule:
 
   # 自定以
   - DOMAIN-KEYWORD,dev,DIRECT
-  - DOMAIN-SUFFIX,hostbuf.com,⛔️ 广告拦截
+  - DOMAIN,account.jetbrains.com,⛔️ 广告拦截
 
 
   - MATCH,💕 规则自选

@@ -49,7 +49,7 @@ Proxy Group:
     name: ♻️ 自动选择
     type: url-test
     proxies:
-      - DIRECT
+      # - DIRECT
       - "1"
   - name: 🌌 YouTube
     type: select
@@ -80,6 +80,7 @@ Proxy Group:
   - name: 🌍 国外媒体
     type: select
     proxies:
+      - 🔰 节点选择
       - ♻️ 自动选择
       - 🎯 全球直连
       - "1"

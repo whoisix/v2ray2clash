@@ -369,12 +369,42 @@ func ssrConf(s string, filterNodeMap map[string]int) ClashRSSR {
 		}
 	}
 
-	// 过滤学术节点
-	if strings.Contains(ssr.Name, "中转规则") {
+	if filterNode(ssr.Name) {
 		return ClashRSSR{}
 	}
 
 	return ssr
+}
+
+func filterNode(nodeName string) bool {
+	// 过滤学术节点
+	if strings.Contains(nodeName, "中转规则") {
+		return true
+	}
+
+	if strings.Contains(nodeName, "阿里云上海中转") {
+		return true
+	}
+
+	if strings.Contains(nodeName, "微信") {
+		return true
+	}
+
+	// 过滤官网
+	if strings.Contains(nodeName, "官网") {
+		return true
+	}
+
+	// 过滤剩余流量
+	if strings.Contains(nodeName, "剩余流量") {
+		return true
+	}
+
+	if strings.Contains(nodeName, "过期时间") {
+		return true
+	}
+
+	return false
 }
 
 func ssConf(s string, filterNodeMap map[string]int) ClashSS {

@@ -77,6 +77,28 @@ type PluginOpts struct {
 	Host string `json:"host"`
 }
 
+type SSD struct {
+	Airport      string  `json:"airport"`
+	Port         int     `json:"port"`
+	Encryption   string  `json:"encryption"`
+	Password     string  `json:"password"`
+	TrafficUsed  float64 `json:"traffic_used"`
+	TrafficTotal float64 `json:"traffic_total"`
+	Expiry       string  `json:"expiry"`
+	URL          string  `json:"url"`
+	Servers      []struct {
+		ID            int     `json:"id"`
+		Server        string  `json:"server"`
+		Ratio         float64 `json:"ratio"`
+		Remarks       string  `json:"remarks"`
+		Port          string  `json:"port"`
+		Encryption    string  `json:"encryption"`
+		Password      string  `json:"password"`
+		Plugin        string  `json:"plugin"`
+		PluginOptions string  `json:"plugin_options"`
+	} `json:"servers"`
+}
+
 type Clash struct {
 	Port      int `yaml:"port"`
 	SocksPort int `yaml:"socks-port"`
@@ -401,7 +423,7 @@ func ssConf(s string, filterNodeMap map[string]int) ClashSS {
 	chunk2 := strings.Split(chunk1[1], ";")
 	ss.Plugin = strings.Split(chunk2[0], "=")[1]
 	switch {
-	case strings.HasPrefix(ss.Plugin, "obfs"):
+	case strings.Contains(ss.Plugin, "obfs"):
 		ss.Plugin = "obfs"
 	}
 
@@ -431,7 +453,51 @@ func ssConf(s string, filterNodeMap map[string]int) ClashSS {
 	return ss
 }
 
-func SSRV2R(c *gin.Context) {
+func ssdConf(ssdJson string) []ClashSS {
+	var ssd SSD
+	err := json.Unmarshal([]byte(ssdJson), &ssd)
+	if err != nil {
+		log.Println("ssd json unmarshal err:", err)
+		return nil
+	}
+
+	var clashSSSlice []ClashSS
+	for _, server := range ssd.Servers {
+
+		if filterNode(server.Remarks) {
+			continue
+		}
+
+		options, err := url.ParseQuery(server.PluginOptions)
+		if err != nil {
+			continue
+		}
+
+		var ss ClashSS
+		ss.Type = "ss"
+		ss.Name = server.Remarks
+		ss.Cipher = server.Encryption
+		ss.Password = server.Password
+		ss.Server = server.Server
+		ss.Port = server.Port
+		ss.Plugin = server.Plugin
+		ss.PluginOpts = PluginOpts{
+			Mode: options["obfs"][0],
+			Host: options["obfs-host"][0],
+		}
+
+		switch  {
+		case strings.Contains(ss.Plugin, "obfs"):
+			ss.Plugin = "obfs"
+		}
+
+		clashSSSlice = append(clashSSSlice, ss)
+	}
+
+	return clashSSSlice
+}
+
+func All(c *gin.Context) {
 	decodeBodyInterface, _ := c.Get("decodebody")
 
 	isClash := c.Query("clash")
@@ -448,6 +514,15 @@ func SSRV2R(c *gin.Context) {
 			continue
 		}
 		FilterSubLinkMap[v] = struct{}{}
+
+		// ssd
+		if strings.Contains(v, "airport") {
+			ssSlice := ssdConf(v)
+			for _, ss := range ssSlice {
+				proxis = append(proxis, ss)
+			}
+			continue
+		}
 
 		scanner := bufio.NewScanner(strings.NewReader(v))
 		for scanner.Scan() {
@@ -495,9 +570,9 @@ func filterNode(nodeName string) bool {
 	//	return true
 	//}
 
-	//if strings.Contains(nodeName, "阿里云上海中转") {
-	//	return true
-	//}
+	if strings.Contains(nodeName, "阿里云上海中转") {
+		return true
+	}
 
 	if strings.Contains(nodeName, "微信") {
 		return true
@@ -519,4 +594,3 @@ func filterNode(nodeName string) bool {
 
 	return false
 }
-

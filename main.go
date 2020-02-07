@@ -77,7 +77,8 @@ func main() {
 	router.GET("/v2ray2clash", api.V2ray2Clash)
 	router.GET("/v2ray2quanx", api.V2ray2Quanx)
 	router.GET("/ssr2clashr", api.SSR2ClashR)
-	router.GET("/ssrv2toclashr", api.SSRV2R)
+	router.GET("/ssrv2toclashr", api.All)
+	router.GET("/", api.All)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf("%s:%s", listenAddr, listenPort),

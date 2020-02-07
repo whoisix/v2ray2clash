@@ -3,6 +3,7 @@ package middleware
 import (
 	"clashconfig/util"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -45,17 +46,9 @@ func httpGet(url string) ([]byte, error) {
 
 func PreMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//rawURI := c.Request.URL.RawQuery
-		//if !strings.HasPrefix(rawURI, "sub_link=http") {
-		//	c.String(http.StatusBadRequest, "sub_link=需要V2ray的订阅链接.")
-		//	c.Abort()
-		//	return
-		//}
-		//sublink := rawURI[9:]
-
 		sublinks := c.Query("sub_link")
 		if sublinks == "" {
-			c.String(http.StatusBadRequest, "sub_link=需要V2ray的订阅链接.")
+			c.String(http.StatusBadRequest, "sub_link=订阅链接.")
 			c.Abort()
 			return
 		}
@@ -78,8 +71,25 @@ func PreMiddleware() gin.HandlerFunc {
 				protoPrefix = "ssr://"
 			case "/ssrv2toclashr":
 				protoCheck = false
+			case "/":
+				protoCheck = false
 			}
-			decodeBody, err := util.Base64DecodeStripped(string(s))
+
+			subContent := string(s)
+			// ssd
+			if strings.HasPrefix(subContent, "ssd://") {
+				subContent = subContent[6:]
+				decodeBody, err := base64.StdEncoding.WithPadding(base64.NoPadding).DecodeString(subContent)
+				if err != nil {
+					log.Println("ssd decode err:",err)
+					continue
+				}
+
+				decodeBodySlice = append(decodeBodySlice, string(decodeBody))
+				continue
+			}
+
+			decodeBody, err := util.Base64DecodeStripped(subContent)
 			if nil != err || (!strings.HasPrefix(string(decodeBody), protoPrefix) && protoCheck) {
 				log.Println(err)
 				c.String(http.StatusBadRequest, "sublink 返回数据格式不对")

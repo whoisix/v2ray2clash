@@ -95,6 +95,7 @@ Proxy Group:
   - name: 🐟 漏网之鱼
     type: select
     proxies:
+      - 🔰 节点选择
       - ✈ 手动选择
       - ✈ 延迟最低
       - ✈ 故障切换

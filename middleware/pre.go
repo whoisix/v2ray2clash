@@ -46,7 +46,7 @@ func httpGet(url string) ([]byte, error) {
 func PreMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		rawURI := c.Request.URL.RawQuery
-		if !strings.HasPrefix(rawURI, "sub_link=http") {
+		if !(strings.HasPrefix(rawURI, "sub_link=http") || strings.HasPrefix(rawURI, "lan_link=http")) {
 			c.String(http.StatusBadRequest, "sub_link=需要V2ray的订阅链接.")
 			c.Abort()
 			return
@@ -77,10 +77,9 @@ func PreMiddleware() gin.HandlerFunc {
 		if c.Request.TLS != nil {
 			scheme = "https"
 		}
-		userAgent := c.Request.Header.Get("User-Agent")
-		if strings.HasPrefix(userAgent, "Mozilla") &&
-			(strings.Contains(userAgent, "Mac OS X") || strings.Contains(userAgent, "Windows")) {
-			requestURL := fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, c.Request.URL.String())
+
+		if strings.HasPrefix(rawURI, "sub_link") {
+			requestURL := fmt.Sprintf("%s://%s%s?lan_link=%s", scheme, c.Request.Host, c.Request.URL.Path, sublink)
 			c.Set("request_url", requestURL)
 		}
 

@@ -95,6 +95,7 @@ Proxy Group:
   - name: 🐟 漏网之鱼
     type: select
     proxies:
+      - 🔰 节点选择
       - ✈ 手动选择
       - ✈ 延迟最低
       - ✈ 故障切换
@@ -1632,6 +1633,7 @@ Rule:
   - DOMAIN-SUFFIX,zhuihd.com,DIRECT
   - DOMAIN,download.jetbrains.com,DIRECT
   - DOMAIN,images-cn.ssl-images-amazon.com,DIRECT
+
   - IP-CIDR,119.28.28.28/32,DIRECT,no-resolve
   - DOMAIN-SUFFIX,smtp,DIRECT
   - DOMAIN-KEYWORD,aria2,DIRECT

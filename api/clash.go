@@ -99,6 +99,7 @@ func (this *Clash) LoadTemplate(path string, protos []interface{}) []byte {
 
 	var proxys []map[string]interface{}
 	var proxies []string
+	names := map[string]int{}
 
 	for _, proto := range protos {
 		o := reflect.ValueOf(proto)
@@ -106,9 +107,18 @@ func (this *Clash) LoadTemplate(path string, protos []interface{}) []byte {
 		proxy := make(map[string]interface{})
 		j, _ := json.Marshal(proto)
 		json.Unmarshal(j, &proxy)
+		name := nameField.String()
+		if index, ok := names[name]; ok {
+			names[name] = index + 1
+			name = fmt.Sprintf("%s(%d)", name, index+1)
+
+		} else {
+			names[name] = 0
+		}
+		proxy["name"] = name
 		proxys = append(proxys, proxy)
 		this.Proxy = append(this.Proxy, proxy)
-		proxies = append(proxies, nameField.String())
+		proxies = append(proxies, name)
 	}
 
 	this.Proxy = proxys

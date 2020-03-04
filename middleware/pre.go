@@ -46,7 +46,16 @@ func httpGet(url string) ([]byte, error) {
 
 func PreMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		sublinks := c.Query("sub_link")
+		query := c.Request.URL.String()
+		idx := strings.Index(query, "sub_link=")
+
+		if idx < 0 {
+			c.String(http.StatusBadRequest, "sub_link=订阅链接.")
+			c.Abort()
+			return
+		}
+
+		sublinks := query[idx+9:]
 		if sublinks == "" {
 			c.String(http.StatusBadRequest, "sub_link=订阅链接.")
 			c.Abort()

@@ -565,10 +565,6 @@ func All(c *gin.Context) {
 }
 
 func filterNode(nodeName string) bool {
-	// 过滤学术节点
-	//if strings.Contains(nodeName, "中转规则") {
-	//	return true
-	//}
 
 	if strings.Contains(nodeName, "阿里云上海中转") {
 		return true

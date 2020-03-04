@@ -541,7 +541,7 @@ func All(c *gin.Context) {
 				s := scanner.Text()[8:]
 				s = strings.TrimSpace(s)
 				clashVmess := v2rConf(s, filterNodeMap)
-				if clashVmess.Name != "" {
+				if clashVmess.Name != "" && !filterNode(clashVmess.Name) {
 					proxis = append(proxis, clashVmess)
 				}
 			case strings.HasPrefix(scanner.Text(), "ss://"):

@@ -19538,7 +19538,7 @@ Rule:
   - GEOIP,CN,DIRECT
 
   # 自定义
-  - DOMAIN-KEYWORD,dev,DIRECT
+  - DOMAIN-KEYWORD,duandada,DIRECT
   - DOMAIN,account.jetbrains.com,广告拦截
 
   - MATCH,final

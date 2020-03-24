@@ -19262,13 +19262,11 @@ Rule:
   - DOMAIN-SUFFIX,zzsssy.com,广告拦截
   - DOMAIN-SUFFIX,zzwflxs.com,广告拦截
   - DOMAIN-SUFFIX,zzyonghao.com,广告拦截
-  将被替换为acl路由规则
-  %!s(MISSING)
 
-# GeoIP China
-- GEOIP,CN,DIRECT
+  # GeoIP China
+  - GEOIP,CN,DIRECT
 
-# 自定义
-- DOMAIN-KEYWORD,duandada,DIRECT
+  # 自定义
+  - DOMAIN-KEYWORD,duandada,DIRECT
 
-- MATCH,final
+  - MATCH,final

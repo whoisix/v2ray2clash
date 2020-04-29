@@ -32,18 +32,6 @@ func init() {
 func DownLoadTemplate(url string, path string) {
 	log.Printf("Rule template URL: %s", url)
 	log.Println("Start downloading the rules template")
-
-	// 代理
-	/*proxy := func(_ *http.Request) (*nurl.URL, error) {
-		return nurl.Parse("http://127.0.0.1:1087")
-	}
-
-	transport := &http.Transport{Proxy: proxy}
-
-	client := &http.Client{Transport: transport}
-
-	resp, err := client.Get(url)*/
-
 	resp, err := http.Get(url)
 	if nil != err {
 		log.Fatalf("Rule template download failed, please manually download save as [%s]\n", path)

@@ -45,61 +45,45 @@ func httpGet(url string) ([]byte, error) {
 
 func PreMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//rawURI := c.Request.URL.RawQuery
-		//if !strings.HasPrefix(rawURI, "sub_link=http") {
-		//	c.String(http.StatusBadRequest, "sub_link=需要V2ray的订阅链接.")
-		//	c.Abort()
-		//	return
-		//}
-		//sublink := rawURI[9:]
-
-		sublinks := c.Query("sub_link")
-		if sublinks == "" {
+		rawURI := c.Request.URL.RawQuery
+		if !(strings.HasPrefix(rawURI, "sub_link=http") || strings.HasPrefix(rawURI, "lan_link=http")) {
 			c.String(http.StatusBadRequest, "sub_link=需要V2ray的订阅链接.")
 			c.Abort()
 			return
 		}
+		sublink := rawURI[9:]
+		s, err := httpGet(sublink)
 
-		linkSlice := strings.Split(sublinks, ",")
+		if nil != err {
+			c.String(http.StatusBadRequest, "sublink 不能访问")
+			c.Abort()
+			return
+		}
+		protoPrefix := "vmess://"
+		switch c.Request.URL.Path {
+		case "/ssr2clashr":
+			protoPrefix = "ssr://"
 
-		decodeBodySlice := make([]string, 0)
-		for _, v := range linkSlice {
-			s, err := httpGet(v)
-
-			if nil != err {
-				c.String(http.StatusBadRequest, "sublink 不能访问")
-				c.Abort()
-				return
-			}
-			protoPrefix := "vmess://"
-			switch c.Request.URL.Path {
-			case "/ssr2clashr":
-				protoPrefix = "ssr://"
-
-			}
-			decodeBody, err := util.Base64DecodeStripped(string(s))
-			if nil != err || !strings.HasPrefix(string(decodeBody), protoPrefix) {
-				log.Println(err)
-				c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
-				c.Abort()
-				return
-			}
-
-			scheme := "http"
-			if c.Request.TLS != nil {
-				scheme = "https"
-			}
-			userAgent := c.Request.Header.Get("User-Agent")
-			if strings.HasPrefix(userAgent, "Mozilla") &&
-				(strings.Contains(userAgent, "Mac OS X") || strings.Contains(userAgent, "Windows")) {
-				requestURL := fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, c.Request.URL.String())
-				c.Set("request_url", requestURL)
-			}
-
-			decodeBodySlice = append(decodeBodySlice, string(decodeBody))
+		}
+		decodeBody, err := util.Base64DecodeStripped(string(s))
+		if nil != err || !strings.HasPrefix(string(decodeBody), protoPrefix) {
+			log.Println(err)
+			c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
+			c.Abort()
+			return
 		}
 
-		c.Set("decodebody", decodeBodySlice)
+		scheme := "http"
+		if c.Request.TLS != nil {
+			scheme = "https"
+		}
+
+		if strings.HasPrefix(rawURI, "sub_link") {
+			requestURL := fmt.Sprintf("%s://%s%s?lan_link=%s", scheme, c.Request.Host, c.Request.URL.Path, sublink)
+			c.Set("request_url", requestURL)
+		}
+
+		c.Set("decodebody", string(decodeBody))
 		c.Next()
 	}
 }

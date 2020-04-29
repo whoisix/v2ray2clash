@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +29,7 @@ type Vmess struct {
 	PS   string      `json:"ps"`
 	TLS  string      `json:"tls"`
 	Type string      `json:"type"`
-	V    string      `json:"v"`
+	V    interface{} `json:"v"`
 }
 
 type ClashVmess struct {
@@ -100,6 +99,7 @@ func (this *Clash) LoadTemplate(path string, protos []interface{}) []byte {
 
 	var proxys []map[string]interface{}
 	var proxies []string
+	names := map[string]int{}
 
 	for _, proto := range protos {
 		o := reflect.ValueOf(proto)
@@ -107,9 +107,18 @@ func (this *Clash) LoadTemplate(path string, protos []interface{}) []byte {
 		proxy := make(map[string]interface{})
 		j, _ := json.Marshal(proto)
 		json.Unmarshal(j, &proxy)
+		name := nameField.String()
+		if index, ok := names[name]; ok {
+			names[name] = index + 1
+			name = fmt.Sprintf("%s(%d)", name, index+1)
+
+		} else {
+			names[name] = 0
+		}
+		proxy["name"] = name
 		proxys = append(proxys, proxy)
 		this.Proxy = append(this.Proxy, proxy)
-		proxies = append(proxies, nameField.String())
+		proxies = append(proxies, name)
 	}
 
 	this.Proxy = proxys
@@ -178,7 +187,7 @@ func V2ray2Clash(c *gin.Context) {
 		clashVmess.UUID = vmess.ID
 		clashVmess.AlterID = vmess.Aid
 		clashVmess.Cipher = vmess.Type
-		if "" != vmess.TLS {
+		if strings.EqualFold(vmess.TLS, "tls") {
 			clashVmess.TLS = true
 		} else {
 			clashVmess.TLS = false
@@ -216,35 +225,31 @@ const (
 )
 
 func SSR2ClashR(c *gin.Context) {
-	decodeBodyInterface, _ := c.Get("decodebody")
+	decodeBody := c.GetString("decodebody")
 
-	decodeBodySlice := decodeBodyInterface.([]string)
-
+	scanner := bufio.NewScanner(strings.NewReader(decodeBody))
 	var ssrs []interface{}
-	filterMap := make(map[string]int)
-	for _, v := range decodeBodySlice {
-		scanner := bufio.NewScanner(strings.NewReader(v))
-		for scanner.Scan() {
-			if !strings.HasPrefix(scanner.Text(), "ssr://") {
-				continue
-			}
-			s := scanner.Text()[6:]
-			s = strings.TrimSpace(s)
-			rawSSRConfig, err := util.Base64DecodeStripped(s)
-			if err != nil {
-				continue
-			}
-			params := strings.Split(string(rawSSRConfig), `:`)
-			if 6 != len(params) {
-				continue
-			}
-			ssr := ClashRSSR{}
-			ssr.Type = "ssr"
-			ssr.Server = params[SSRServer]
-			ssr.Port = params[SSRPort]
-			ssr.Protocol = params[SSRProtocol]
-			ssr.Cipher = params[SSRCipher]
-			ssr.OBFS = params[SSROBFS]
+	for scanner.Scan() {
+		if !strings.HasPrefix(scanner.Text(), "ssr://") {
+			continue
+		}
+		s := scanner.Text()[6:]
+		s = strings.TrimSpace(s)
+		rawSSRConfig, err := util.Base64DecodeStripped(s)
+		if err != nil {
+			continue
+		}
+		params := strings.Split(string(rawSSRConfig), `:`)
+		if 6 != len(params) {
+			continue
+		}
+		ssr := ClashRSSR{}
+		ssr.Type = "ssr"
+		ssr.Server = params[SSRServer]
+		ssr.Port = params[SSRPort]
+		ssr.Protocol = params[SSRProtocol]
+		ssr.Cipher = params[SSRCipher]
+		ssr.OBFS = params[SSROBFS]
 
 		// 如果兼容ss协议，就转换为clash的ss配置
 		// https://github.com/Dreamacro/clash
@@ -258,53 +263,45 @@ func SSR2ClashR(c *gin.Context) {
 				ssr.Type = "ss"
 			}
 		}
+
 		suffix := strings.Split(params[SSRSuffix], "/?")
-			if 2 != len(suffix) {
-				continue
-			}
-			passwordBase64 := suffix[0]
-			password, err := util.Base64DecodeStripped(passwordBase64)
-			if err != nil {
-				continue
-			}
-			ssr.Password = string(password)
-
-			m, err := url.ParseQuery(suffix[1])
-			if err != nil {
-				continue
-			}
-
-			for k, v := range m {
-				de, err := util.Base64DecodeStripped(v[0])
-				if err != nil {
-					continue
-				}
-				switch k {
-				case "obfsparam":
-					ssr.OBFSParam = string(de)
-					continue
-				case "protoparam":
-					ssr.ProtocolParam = string(de)
-					continue
-				case "remarks":
-					ssr.Name = string(de)
-					ssrName := ssr.Name
-					if v, ok := filterMap[ssrName]; ok {
-						v++
-						filterMap[ssrName] = v
-						ssr.Name = ssrName + strconv.Itoa(v)
-					} else {
-						filterMap[ssrName] = 0
-					}
-					continue
-				case "group":
-					continue
-				}
-			}
-			ssrs = append(ssrs, ssr)
+		if 2 != len(suffix) {
+			continue
 		}
-	}
+		passwordBase64 := suffix[0]
+		password, err := util.Base64DecodeStripped(passwordBase64)
+		if err != nil {
+			continue
+		}
+		ssr.Password = string(password)
 
+		m, err := url.ParseQuery(suffix[1])
+		if err != nil {
+			continue
+		}
+
+		for k, v := range m {
+			de, err := util.Base64DecodeStripped(v[0])
+			if err != nil {
+				continue
+			}
+			switch k {
+			case "obfsparam":
+				ssr.OBFSParam = string(de)
+				continue
+			case "protoparam":
+				ssr.ProtocolParam = string(de)
+				continue
+			case "remarks":
+				ssr.Name = string(de)
+				continue
+			case "group":
+				continue
+			}
+		}
+
+		ssrs = append(ssrs, ssr)
+	}
 	clash := Clash{}
 	r := clash.LoadTemplate("ConnersHua.yaml", ssrs)
 	if r == nil {

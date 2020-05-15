@@ -208,7 +208,7 @@ func V2ray2Clash(c *gin.Context) {
 
 	requestURL := c.GetString("request_url")
 	if requestURL != "" {
-		clashx := fmt.Sprintf("clash://install-config?url=%s", url.PathEscape(requestURL))
+		clashx := fmt.Sprintf("clash://install-config?url=%s", url.QueryEscape(requestURL))
 		c.Redirect(http.StatusMovedPermanently, clashx)
 	} else {
 		c.String(http.StatusOK, util.UnicodeEmojiDecode(string(r)))

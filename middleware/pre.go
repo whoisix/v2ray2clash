@@ -52,7 +52,7 @@ func PreMiddleware() gin.HandlerFunc {
 			return
 		}
 		sublink := rawURI[9:]
-		s, err := httpGet(sublink)
+		s, err := httpGet(sublink)//s - sub config raw content
 
 		if nil != err {
 			c.String(http.StatusBadRequest, "sublink 不能访问")
@@ -65,7 +65,7 @@ func PreMiddleware() gin.HandlerFunc {
 			protoPrefix = "ssr://"
 
 		}
-		decodeBody, err := util.Base64DecodeStripped(string(s))
+		decodeBody, err := util.Base64DecodeStripped(string(s))//decodeBody: decoded config
 		if nil != err || !strings.HasPrefix(string(decodeBody), protoPrefix) {
 			log.Println(err)
 			c.String(http.StatusBadRequest, "sublink 返回数据格式不对")
@@ -80,7 +80,7 @@ func PreMiddleware() gin.HandlerFunc {
 
 		if strings.HasPrefix(rawURI, "sub_link") {
 			requestURL := fmt.Sprintf("%s://%s%s?lan_link=%s", scheme, c.Request.Host, c.Request.URL.Path, sublink)
-			c.Set("request_url", requestURL)
+			c.Set("request_url", requestURL)//lan link
 		}
 
 		c.Set("decodebody", string(decodeBody))

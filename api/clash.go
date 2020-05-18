@@ -197,7 +197,7 @@ func V2ray2Clash(c *gin.Context) {
 			clashVmess.WSPATH = vmess.Path
 		}
 
-		vmesss = append(vmesss, clashVmess)
+		vmesss = append(vmesss, clashVmess)//vmess config entries
 	}
 	clash := Clash{}
 	r := clash.LoadTemplate("ConnersHua.yaml", vmesss)

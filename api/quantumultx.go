@@ -140,7 +140,7 @@ func V2ray2Quanx(c *gin.Context) {
 			c.String(http.StatusBadRequest, "转换错误")
 			return
 		}
-		quantumultx := fmt.Sprintf("quantumult-x:///update-configuration?remote-resource=%s", url.PathEscape(string(b)))
+		quantumultx := fmt.Sprintf("quantumult-x:///update-configuration?remote-resource=%s", url.QueryEscape(string(b)))
 		c.Redirect(http.StatusMovedPermanently, quantumultx)
 	} else {
 		// c.String(http.StatusOK, configs)

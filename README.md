@@ -18,6 +18,8 @@ Usage of ./clashconfig-linux-armv7:
         Listen Port (default "5050")
 ```
 2. 使用下面格式设置订阅链接，QuantumultX、Clash设置可以直接用浏览器访问构造好的链接，点击导入即可。
+
+* 注：QuantX和Clash系软件，若想在软件中直接获取配置文件，请将sub_link替换为lan_link。
 #### v2ray转clash
 ```
 http://127.0.0.1:5050/v2ray2clash?sub_link=此处换成需要转换的v2ray订阅链接

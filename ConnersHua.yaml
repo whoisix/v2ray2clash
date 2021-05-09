@@ -18997,5 +18997,6 @@ rules:
 
   # 自定义
   - DOMAIN-KEYWORD,medlinker,DIRECT
+  - DOMAIN-KEYWORD,appcenter,节点选择
 
   - MATCH,final

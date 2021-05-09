@@ -2,7 +2,6 @@ package api
 
 import (
 	"bufio"
-	"clashconfig/util"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,8 +13,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
+	"clashconfig/util"
 
+	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v2"
 )
 
@@ -102,12 +102,13 @@ type SSD struct {
 type Clash struct {
 	Port      int `yaml:"port"`
 	SocksPort int `yaml:"socks-port"`
-	// RedirPort          int                      `yaml:"redir-port"`
+	RedirPort int `yaml:"redir-port"`
 	// Authentication     []string                 `yaml:"authentication"`
 	AllowLan           bool   `yaml:"allow-lan"`
 	Mode               string `yaml:"mode"`
 	LogLevel           string `yaml:"log-level"`
 	ExternalController string `yaml:"external-controller"`
+	Dns               map[string]interface{}   `yaml:"dns"`
 	// ExternalUI         string                   `yaml:"external-ui"`
 	// Secret             string                   `yaml:"secret"`
 	// Experimental       map[string]interface{} 	`yaml:"experimental"`
@@ -486,7 +487,7 @@ func ssdConf(ssdJson string) []ClashSS {
 			Host: options["obfs-host"][0],
 		}
 
-		switch  {
+		switch {
 		case strings.Contains(ss.Plugin, "obfs"):
 			ss.Plugin = "obfs"
 		}
